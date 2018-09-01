@@ -8,6 +8,7 @@ var args = require('yargs').argv;
 
 var config = require('./gulp.config')();
 var $ = require('gulp-load-plugins')({lazy:true});
+var del = require('del'); 
 
 
 gulp.task('vet', function () {
@@ -19,6 +20,27 @@ gulp.task('vet', function () {
         .pipe($.jshint.reporter('jshint-stylish',{verbose: true}))
         .pipe($.jshint.reporter('fail'));
   });
+
+gulp.task('styles',['clean-styles'], function () {  
+    log('compile less -> css');
+    return gulp
+            .src(config.less)
+            .pipe($.less())
+            .pipe($.autoprefixer()) 
+            .pipe(gulp.dest(config.temp));
+
+});
+
+gulp.task('clean-styles',function(done){
+    var files = config.temp + '**/*.css';
+    clean(files, done);
+});
+
+function clean(path,done){
+    log('cleaning path '+ $.util.colors.red(path));
+    del(path, done);
+
+}
 
   function log(msg){
     if (typeof(msg) === 'object')
