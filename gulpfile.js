@@ -25,20 +25,33 @@ gulp.task('styles',['clean-styles'], function () {
     log('compile less -> css');
     return gulp
             .src(config.less)
+            .pipe($.plumber())
             .pipe($.less())
+            //.on('error', errorLogger)
             .pipe($.autoprefixer()) 
             .pipe(gulp.dest(config.temp));
 
 });
 
-gulp.task('clean-styles',function(done){
+// function errorLogger(error){
+//     log('inicio do erro');
+//     log(error);
+//     log('final do erro');
+//     this.emit('end');
+// }
+
+gulp.task('clean-styles',function(){
     var files = config.temp + '**/*.css';
-    clean(files, done);
+    clean(files);
 });
 
-function clean(path,done){
+gulp.task('less-watcher', function () { 
+    gulp.watch([config.less],['styles']);
+ });
+
+function clean(path){
     log('cleaning path '+ $.util.colors.red(path));
-    del(path, done);
+    del(path);
 
 }
 
