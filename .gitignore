@@ -40,6 +40,7 @@ journal
 *.exe
 *.o
 *.so
+*.bowerrc
 
 # Packages #
 ############
