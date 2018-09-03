@@ -50,6 +50,7 @@ gulp.task('less-watcher', function () {
  });
 
  gulp.task('wiredep',function(){
+     log('wire up the bower css e js and our ap into the html');
      var options = config.getWiredepDefaultOptions();
      var wiredep = require('wiredep').stream;
      return gulp
@@ -58,6 +59,15 @@ gulp.task('less-watcher', function () {
                 .pipe($.inject(gulp.src(config.js)))
                 .pipe(gulp.dest(config.client));
  });
+
+ gulp.task('inject',['wiredep','styles'],function(){
+    log('');
+
+    return gulp
+               .src(config.index)
+               .pipe($.inject(gulp.src(config.css)))
+               .pipe(gulp.dest(config.client));
+});
 
 function clean(path){
     log('cleaning path '+ $.util.colors.red(path));
