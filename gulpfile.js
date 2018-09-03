@@ -25,20 +25,20 @@ gulp.task('styles',['clean-styles'], function () {
     log('compile less -> css');
     return gulp
             .src(config.less)
-            .pipe($.plumber())
+           // .pipe($.plumber())
             .pipe($.less())
-            //.on('error', errorLogger)
+            .on('error', errorLogger)
             .pipe($.autoprefixer()) 
             .pipe(gulp.dest(config.temp));
 
 });
 
-// function errorLogger(error){
-//     log('inicio do erro');
-//     log(error);
-//     log('final do erro');
-//     this.emit('end');
-// }
+function errorLogger(error){
+    log('inicio do erro');
+    log(error);
+    log('final do erro');
+    this.emit('end');
+}
 
 gulp.task('clean-styles',function(){
     var files = config.temp + '**/*.css';
