@@ -1,62 +1,52 @@
-var gulp  =require('gulp');
- var print = require('gulp-print').default;
+var gulp = require('gulp');
 var args = require('yargs').argv;
+var broweserSync = require('browser-sync');
+var del = require('del');
 var config = require('./gulp.config')();
-var del = require('del'); 
 var $ = require('gulp-load-plugins')({lazy:true});
 var port = process.env.port || config.defaultPort;
-
 
 gulp.task('vet', function () {
     log('analisando');
     gulp.src(config.alljs)
-        .pipe($.if(args.jander, print()) )
+        .pipe($.if(args.jander, $.print()))
         .pipe($.jscs())
         .pipe($.jshint())
         .pipe($.jshint.reporter('jshint-stylish',{verbose: true}))
         .pipe($.jshint.reporter('fail'));
-  });
+});
 
-gulp.task('styles',['clean-styles'], function () {  
+gulp.task('styles',['clean-styles'], function () {
     log('compile less -> css');
     return gulp
             .src(config.less)
-           // .pipe($.plumber())
+            .pipe($.plumber())
             .pipe($.less())
-            .on('error', errorLogger)
-            .pipe($.autoprefixer()) 
+            .pipe($.autoprefixer())
             .pipe(gulp.dest(config.temp));
-
 });
 
-function errorLogger(error){
-    log('inicio do erro');
-    log(error);
-    log('final do erro');
-    this.emit('end');
-}
-
-gulp.task('clean-styles',function(){
+gulp.task('clean-styles',function(done) {
     var files = config.temp + '**/*.css';
-    clean(files);
+    clean(files,done);
 });
 
-gulp.task('less-watcher', function () { 
+gulp.task('less-watcher', function () {
     gulp.watch([config.less],['styles']);
- });
+});
 
- gulp.task('wiredep',function(){
-     log('wire up the bower css e js and our ap into the html');
-     var options = config.getWiredepDefaultOptions();
-     var wiredep = require('wiredep').stream;
-     return gulp
+gulp.task('wiredep', function() {
+    log('wire up the bower css e js and our ap into the html');
+    var options = config.getWiredepDefaultOptions();
+    var wiredep = require('wiredep').stream;
+    return gulp
                 .src(config.index)
                 .pipe(wiredep(options))
                 .pipe($.inject(gulp.src(config.js)))
                 .pipe(gulp.dest(config.client));
- });
+});
 
- gulp.task('inject',['wiredep','styles'],function(){
+gulp.task('inject',['wiredep','styles'],function() {
     log('');
 
     return gulp
@@ -65,8 +55,7 @@ gulp.task('less-watcher', function () {
                .pipe(gulp.dest(config.client));
 });
 
-
-gulp.task('serve-dev',['inject'], function(){
+gulp.task('serve-dev',['inject'], function() {
         var isDev = true;
         var nodeOptions = {
             script: config.nodeServer,
@@ -78,28 +67,57 @@ gulp.task('serve-dev',['inject'], function(){
             watch: [config.server]
         };
         return $.nodemon(nodeOptions)
-              .on('restart',function(ev){
-                  log('nodemon restared!');
-              });
-});
+              .on('start',function(ev) {
+                log('nodemon started!');
+                startBroweserSync();
+            });
+    });
 
-function clean(path){
-    log('cleaning path '+ $.util.colors.red(path));
-    del(path);
-
+function clean(path,done) {
+    log('cleaning path ' + $.util.colors.red(path));
+    del(path,done);
 }
 
-  function log(msg){
+function startBroweserSync() {
+    if (broweserSync.active) {
+        return;
+    }
+    log('Starting broweser sync ' + port);
+
+    var options = {
+        proxy: 'localhost:' + port,
+        port:3000,
+        files: [
+            config.client + '**/*.*',
+            '!' + config.less,
+            config.temp + '**/*.css'
+        ],
+        ghostMode:{
+            clicks: true,
+            location: false,
+            forms: true,
+            scroll: true
+        },
+        injectChanges: true,
+        logFileChanges: true,
+        logLevel: 'debug',
+        logPrefix: 'gulp-patterns',
+        notify: true,
+        reloadDelay: 1000
+    };
+}
+
+function log(msg) {
     if (typeof(msg) === 'object')
     {
-        for(var item in msg){
-            if(msg.hasOwnProperty(item))
+        for (var item in msg) {
+            if (msg.hasOwnProperty(item))
             {
                 $.util.log($.util.colors.blue(msg[item]));
             }
         }
     }
-    else{
+    else {
         $.util.log($.util.colors.blue(msg));
     }
-  }
+}
