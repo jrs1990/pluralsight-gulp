@@ -1,6 +1,6 @@
 var gulp = require('gulp');
 var args = require('yargs').argv;
-var broweserSync = require('browser-sync');
+var browserSync = require('browser-sync');
 var del = require('del');
 var config = require('./gulp.config')();
 var $ = require('gulp-load-plugins')({lazy:true});
@@ -78,11 +78,21 @@ function clean(path,done) {
     del(path,done);
 }
 
+function changeEvent(event){
+    var srcPattern = new RegExp('/.*(?=/' + config.source + ')/');
+    log('File: '+event.path.replace(srcPattern,'') + ' ' + event.type);
+}
+
 function startBroweserSync() {
-    if (broweserSync.active) {
+    if (browserSync.active) {
         return;
     }
     log('Starting broweser sync ' + port);
+
+    gulp.watch([config.less],['styles'])
+        .on('change', function(event){
+            changeEvent(event);
+        });
 
     var options = {
         proxy: 'localhost:' + port,
@@ -105,6 +115,8 @@ function startBroweserSync() {
         notify: true,
         reloadDelay: 1000
     };
+
+    browserSync(options);
 }
 
 function log(msg) {

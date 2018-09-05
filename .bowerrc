@@ -1,8 +1,6 @@
 {
-
+	"https-proxy": "http//CORPORATE%5Cjansouza:a4%21kbs%3A%23%3A1ja@10.0.0.24:8080",
     "proxy": "http//CORPORATE%5Cjansouza:a4%21kbs%3A%23%3A1ja@10.0.0.24:8080",
-	"https-proxy": "http://corporate%5Cjansouza:a4%21kbs%3A%23%3A1ja@10.0.0.24:8080",
-	"rejectUnauthorized": false,
 	"strict-ssl": false,
     "directory": "bower_components",
     "scripts": {
