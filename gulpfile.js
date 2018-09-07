@@ -5,6 +5,10 @@ var del = require('del');
 var config = require('./gulp.config')();
 var $ = require('gulp-load-plugins')({lazy:true});
 var port = process.env.port || config.defaultPort;
+var taskListing = require('gulp-task-listing');
+
+gulp.task('help', taskListing);
+
 
 gulp.task('vet', function () {
     log('analisando');
@@ -67,10 +71,25 @@ gulp.task('serve-dev',['inject'], function() {
             watch: [config.server]
         };
         return $.nodemon(nodeOptions)
-              .on('start',function(ev) {
+            .on('restart', function(env) {
+                 log('**** nodemon restared');
+                 log('files changed on restart:\n' + env);
+                 setTimeout(function() {
+                    browserSync.notify('reloading now ....');
+                    browserSync.reload({stream: false});
+                 }, config.browserReloadDelay);
+            })
+            .on('start',function(ev) {
                 log('nodemon started!');
                 startBroweserSync();
-            });
+            })
+            .on('crash', function() {
+                log('**** nodemon crashed: script crashed for some reson');
+             })
+            .on('exit', function() {
+                log('**** nodemon exited cleanly');
+             });
+
     });
 
 function clean(path,done) {
@@ -84,7 +103,7 @@ function changeEvent(event){
 }
 
 function startBroweserSync() {
-    if (browserSync.active) {
+    if (args.nosync || browserSync.active) {
         return;
     }
     log('Starting broweser sync ' + port);
