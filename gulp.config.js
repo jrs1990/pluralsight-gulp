@@ -6,8 +6,11 @@ module.exports = function () {
 
     var config = {
         alljs : ['./src/**/*.js','./*.js'],
+        build: './build/',
         client : client,
         css: temp + 'styles.css',
+        fonts: './bower_components/font-awesome/fonts/**/*.*',
+        images: client + 'images/**/*.*',
         index: client + 'index.html',
         js: [
             clientApp + '**/*.module.js',
