@@ -1,36 +1,214 @@
-var gulp  =require('gulp');
-// var jshint = require('gulp-jshint');
-// var jscs = require('gulp-jscs');
-// var util = require('gulp-util');
- var print = require('gulp-print').default;
-// var gulpif = require('gulp-if');
+var gulp = require('gulp');
 var args = require('yargs').argv;
-
+var browserSync = require('browser-sync');
+var del = require('del');
 var config = require('./gulp.config')();
 var $ = require('gulp-load-plugins')({lazy:true});
+var port = process.env.port || config.defaultPort;
 
+gulp.task('help', $.taskListing);
+
+gulp.task('default',['help']);
 
 gulp.task('vet', function () {
     log('analisando');
     gulp.src(config.alljs)
-        .pipe($.if(args.jander, print()) )
+        .pipe($.if(args.jander, $.print()))
         .pipe($.jscs())
         .pipe($.jshint())
         .pipe($.jshint.reporter('jshint-stylish',{verbose: true}))
         .pipe($.jshint.reporter('fail'));
-  });
+});
 
-  function log(msg){
+gulp.task('styles',['clean-styles'], function () {
+    log('compile less -> css');
+    return gulp
+            .src(config.less)
+            .pipe($.plumber())
+            .pipe($.less())
+            .pipe($.autoprefixer())
+            .pipe(gulp.dest(config.temp));
+});
+gulp.task('images',['clean-images'], function() {
+    log('copying our images!');
+    return gulp.src(config.images)
+            .pipe($.imagemin({optimizationLevel: 4}))
+            .pipe(gulp.dest(config.build + 'images'));
+    
+});
+
+gulp.task('fonts',['clean-fonts'], function() {
+    log('copying our fonts!');
+    return gulp.src(config.fonts)
+            .pipe(gulp.dest(config.build + 'fonts'));
+});
+
+gulp.task('clean-styles',function(done) {
+    log('cleaning styles!');
+    var files = config.temp + '**/*.css';
+    clean(files,done);
+});
+
+gulp.task('clean-fonts',function(done) {
+    log('cleaning fonts!');
+    var files = config.build + 'fonts/**/*.*';
+    clean(files,done);
+});
+
+gulp.task('clean-images',function(done) {
+    var files = config.build + 'images/**/*.*';
+    clean(files,done);
+});
+
+gulp.task('clean-code',function(done) {
+    var files = [].concat(
+                            config.temp + '**/*.js',
+                            config.build + '**/*.html',
+                            config.build + 'js/**/*.js'
+                        );
+    clean(files,done);
+});
+
+gulp.task('clean',function(done) {
+    var delconfig = [].concat(config.build, config.temp);
+    log('cleaning: ' + $.util.colors.blue(delconfig));
+    del(delconfig, done);
+});
+
+
+gulp.task('templatecache',['clean-code'], function() {
+    log('creating AngularJS $templateCache');
+    return gulp
+            .src(config.htmlTemplates)
+            .pipe($.minifyHtml({empty: true}))
+            .pipe($.angularTemplatecache(
+                                config.templateCache.file,
+                                config.templateCache.options
+                                ))
+            .pipe(gulp.dest(config.temp));
+
+});
+
+
+gulp.task('clean-styles',function(done) {
+    var files = config.temp + '**/*.css';
+    clean(files,done);
+});
+
+gulp.task('less-watcher', function () {
+    gulp.watch([config.less],['styles']);
+});
+
+gulp.task('wiredep', function() {
+    log('wire up the bower css e js and our ap into the html');
+    var options = config.getWiredepDefaultOptions();
+    var wiredep = require('wiredep').stream;
+    return gulp
+                .src(config.index)
+                .pipe(wiredep(options))
+                .pipe($.inject(gulp.src(config.js)))
+                .pipe(gulp.dest(config.client));
+});
+
+gulp.task('inject',['wiredep','styles'],function() {
+    log('');
+
+    return gulp
+               .src(config.index)
+               .pipe($.inject(gulp.src(config.css)))
+               .pipe(gulp.dest(config.client));
+});
+
+gulp.task('serve-dev',['inject'], function() {
+        var isDev = true;
+        var nodeOptions = {
+            script: config.nodeServer,
+            delayTime:1,
+            env:{
+                'PORT': port,
+                'NODE_ENV': isDev ? 'dev' : 'build'
+            },
+            watch: [config.server]
+        };
+        return $.nodemon(nodeOptions)
+            .on('restart', function(env) {
+                 log('**** nodemon restared');
+                 log('files changed on restart:\n' + env);
+                 setTimeout(function() {
+                    browserSync.notify('reloading now ....');
+                    browserSync.reload({stream: false});
+                 }, config.browserReloadDelay);
+            })
+            .on('start',function(ev) {
+                log('nodemon started!');
+                startBroweserSync();
+            })
+            .on('crash', function() {
+                log('**** nodemon crashed: script crashed for some reson');
+             })
+            .on('exit', function() {
+                log('**** nodemon exited cleanly');
+             });
+
+    });
+
+function clean(path,done) {
+    log('cleaning path ' + $.util.colors.red(path));
+    del(path,done);
+}
+
+function changeEvent(event){
+    var srcPattern = new RegExp('/.*(?=/' + config.source + ')/');
+    log('File: '+event.path.replace(srcPattern,'') + ' ' + event.type);
+}
+
+function startBroweserSync() {
+    if (args.nosync || browserSync.active) {
+        return;
+    }
+    log('Starting broweser sync ' + port);
+
+    gulp.watch([config.less],['styles'])
+        .on('change', function(event){
+            changeEvent(event);
+        });
+
+    var options = {
+        proxy: 'localhost:' + port,
+        port:3000,
+        files: [
+            config.client + '**/*.*',
+            '!' + config.less,
+            config.temp + '**/*.css'
+        ],
+        ghostMode:{
+            clicks: true,
+            location: false,
+            forms: true,
+            scroll: true
+        },
+        injectChanges: true,
+        logFileChanges: true,
+        logLevel: 'debug',
+        logPrefix: 'gulp-patterns',
+        notify: true,
+        reloadDelay: 1000
+    };
+
+    browserSync(options);
+}
+
+function log(msg) {
     if (typeof(msg) === 'object')
     {
-        for(var item in msg){
-            if(msg.hasOwnProperty(item))
+        for (var item in msg) {
+            if (msg.hasOwnProperty(item))
             {
                 $.util.log($.util.colors.blue(msg[item]));
             }
         }
     }
-    else{
+    else {
         $.util.log($.util.colors.blue(msg));
     }
-  }
+}
