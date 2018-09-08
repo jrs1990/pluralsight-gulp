@@ -31,6 +31,14 @@ module.exports = function () {
         nodeServer: server + 'app.js',
         broweserReloadDelay: 1000,
 
+        /*
+        OPTIMIZED FILE NAMES
+         */
+        optimized: {
+            lib: 'lib.js',
+            app: 'app.js'
+        },
+
         /*Template Cache 
         */
        templateCache: {
