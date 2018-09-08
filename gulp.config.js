@@ -1,39 +1,40 @@
 module.exports = function () {
     var client = './src/client/';
-    var clientApp = client + 'app';
+    var clientApp = client + 'app/';
     var server = './src/server/';
-    var temp = './.tmp';
+    var temp = './.tmp/';
 
     var config = {
-        alljs : ['./src/**/*.js','./*.js'],
+        alljs : ['./src/**/*.js', './*.js'],
         build: './build/',
         client : client,
         css: temp + 'styles.css',
         fonts: './bower_components/font-awesome/fonts/**/*.*',
+        html: clientApp + '**/.*html',
         htmlTemplates: client + '**/*.html',
         images: client + 'images/**/*.*',
         index: client + 'index.html',
         js: [
             clientApp + '**/*.module.js',
             clientApp + '**/*.js',
-            '!' + clientApp + '**/*.spec.js',
+            '!' + clientApp + '**/*.spec.js'
         ],
         less: client + 'styles/styles.less',
         server: server,
         temp: temp,
         bower: {
             json: require('./bower.json'),
-            directory: '.bower_components/',
+            directory: 'bower_components/',
             ignorePath: '../..'
         },
         defaultPort: 7203,
-        nodeServer: './src/server/app.js',
+        nodeServer: server + 'app.js',
         broweserReloadDelay: 1000,
 
         /*Template Cache 
         */
        templateCache: {
-           file: 'template.js',
+           file: 'templates.js',
            options: {
                module: 'app.core',
                standAlone: false,
