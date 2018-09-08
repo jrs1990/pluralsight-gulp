@@ -60,12 +60,34 @@ gulp.task('clean-images',function(done) {
     clean(files,done);
 });
 
+gulp.task('clean-code',function(done) {
+    var files = [].concat(
+                            config.temp + '**/*.js',
+                            config.build + '**/*.html',
+                            config.build + 'js/**/*.js'
+                        );
+    clean(files,done);
+});
+
 gulp.task('clean',function(done) {
     var delconfig = [].concat(config.build, config.temp);
     log('cleaning: ' + $.util.colors.blue(delconfig));
-    del(delconfig, done)
+    del(delconfig, done);
 });
 
+
+gulp.task('templatecache',['clean-code'], function() {
+    log('creating AngularJS $templateCache');
+    return gulp
+            .src(config.htmlTemplates)
+            .pipe($.minifyHtml({empty: true}))
+            .pipe($.angularTemplatecache(
+                                config.templateCache.file,
+                                config.templateCache.options
+                                ))
+            .pipe(gulp.dest(config.temp));
+
+});
 
 
 gulp.task('clean-styles',function(done) {
