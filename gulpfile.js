@@ -90,18 +90,23 @@ gulp.task('templatecache',['clean-code'], function() {
 });
 
 gulp.task('optimize',['inject','fonts','images'], function() {
-    log('optimizing the javascript, csse and html!');
+    log('optimizing the javascript, css and html!');
   
-   var templatecache = config.temp + config.templateCache.file;
-   var assets = $.useref.assets({searchPath: './'});
+  var assets = $.useref.assets({searchPath: './'});
+  var templatecache = config.temp + config.templateCache.file;
    var cssFilter = $.filter('**/*.css');
    var jsLibFilter = $.filter('**/' + config.optimized.app);
    var jsAppFilter = $.filter('**/' + config.optimized.lib);
 
+    log('templatecache: ' + templatecache);
+    log('config.optimized.app: ' + config.optimized.app);
+    log('config.optimized.lib: ' + config.optimized.lib);
+
     return gulp
             .src(config.index)
             .pipe($.plumber())
-            .pipe($.inject(gulp.src(templatecache), {read: false}, {
+            .pipe($.inject(
+                gulp.src(templatecache, {read: false}), {
                 starttag: '<!-- inject:templates:js -->'
             }))
             .pipe(assets)
@@ -115,9 +120,36 @@ gulp.task('optimize',['inject','fonts','images'], function() {
             .pipe($.ngAnnotate())
             .pipe($.uglify())
             .pipe(jsAppFilter.restore())
+            .pipe($.rev())
             .pipe(assets.restore())
             .pipe($.useref())
+            .pipe($.revReplace())
+            .pipe(gulp.dest(config.build))
+            .pipe($.rev.manifest())
             .pipe(gulp.dest(config.build));
+});
+
+gulp.task('bump', function() {
+    var msg = "Bumping version";
+    var type = args.type;
+    var version = args.version;
+    var options = {};
+
+    if(version) {
+        options.version = version;
+        msg += ' to ' + version;
+    }
+    else {
+        options.type = type;
+        msg += ' for a ' + type;
+    } 
+    log(msg);
+
+    return gulp
+            .src(config.packages)
+            .pipe($.print())
+            .pipe($.bump(options))
+            .pipe(gulp.dest(config.root));
 });
 
 gulp.task('clean-styles',function(done) {

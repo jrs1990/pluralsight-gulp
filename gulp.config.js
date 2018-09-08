@@ -3,6 +3,7 @@ module.exports = function () {
     var clientApp = client + 'app/';
     var server = './src/server/';
     var temp = './.tmp/';
+    var root = './';
 
     var config = {
         alljs : ['./src/**/*.js', './*.js'],
@@ -20,6 +21,7 @@ module.exports = function () {
             '!' + clientApp + '**/*.spec.js'
         ],
         less: client + 'styles/styles.less',
+        root: root,
         server: server,
         temp: temp,
         bower: {
@@ -27,6 +29,10 @@ module.exports = function () {
             directory: 'bower_components/',
             ignorePath: '../..'
         },
+        packages: [
+            './package.json',
+            './bower.json'
+        ],
         defaultPort: 7203,
         nodeServer: server + 'app.js',
         broweserReloadDelay: 1000,
