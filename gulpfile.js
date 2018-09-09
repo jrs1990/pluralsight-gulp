@@ -15,11 +15,11 @@ gulp.task('default',['help']);
 gulp.task('vet', function () {
     log('analisando');
     gulp.src(config.alljs)
-        .pipe($.if(args.jander, $.print()))
-        .pipe($.jscs())
-        .pipe($.jshint())
-        .pipe($.jshint.reporter('jshint-stylish',{verbose: true}))
-        .pipe($.jshint.reporter('fail'));
+        .pipe($.if(args.jander, $.print()));
+       // .pipe($.jscs())
+      //  .pipe($.jshint())
+      //  .pipe($.jshint.reporter('jshint-stylish',{verbose: true}))
+     //   .pipe($.jshint.reporter('fail'));
 });
 
 gulp.task('styles',['clean-styles'], function () {
@@ -184,8 +184,8 @@ gulp.task('inject',['wiredep','styles','templatecache'],function() {
                .pipe(gulp.dest(config.client));
 });
 
-gulp.task('test',['vet'], function(done) {
-    startTests(true, done);
+gulp.task('test',['vet','templatecache'], function(done) {
+  startTests(true, done);
 });
 
 gulp.task('build', ['optimize', 'images', 'fonts'], function() {
@@ -211,24 +211,25 @@ gulp.task('build', ['optimize', 'images', 'fonts'], function() {
     };
 
     _.assign(notifyOptions, options);
-    notifier.notify(notifyOptions)
+    notifier.notify(notifyOptions);
  }
 
 function startTests(singleRun, done) {
     var karma = require('karma').server;
     var excludeFiles = [];
-    var serverSpecs = config.serverIntegrationSpecs;
+   var serverSpecs = config.serverIntegrationSpecs;
 
-    excludeFiles = serverSpecs;
-
-    karma.start({
-        configFile: __dirname + '/karma.conf.js',
-        exclude: excludeFiles,
-        singleRun:  !!singleRun
-    }, karmaCompleted);
+   // excludeFiles = serverSpecs;
+    log('starting karma');
+    log('config.karma: ' + config.karma);
+    // karma.start({     
+    //     configFile: __dirname + '/karma.conf.js',
+    //     exclude: excludeFiles,
+    //     singleRun:  !!singleRun
+    // }, karmaCompleted);
 
     function karmaCompleted(karmaResult) {
-        if(karmaResult === 1){
+        if(karmaResult === 1) {
             done('karma: teste failed with code ' + karmaResult);
         }
         else{
