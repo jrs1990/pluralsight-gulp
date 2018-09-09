@@ -5,6 +5,8 @@ var del = require('del');
 var config = require('./gulp.config')();
 var $ = require('gulp-load-plugins')({lazy:true});
 var port = process.env.port || config.defaultPort;
+var path = require('path');
+var _ = require('lodash');
 
 gulp.task('help', $.taskListing);
 
@@ -89,7 +91,7 @@ gulp.task('templatecache',['clean-code'], function() {
 
 });
 
-gulp.task('optimize',['inject','fonts','images'], function() {
+gulp.task('optimize',['inject', 'test'], function() {
     log('optimizing the javascript, css and html!');
   
   var assets = $.useref.assets({searchPath: './'});
@@ -130,7 +132,7 @@ gulp.task('optimize',['inject','fonts','images'], function() {
 });
 
 gulp.task('bump', function() {
-    var msg = "Bumping version";
+    var msg = 'Bumping version';
     var type = args.type;
     var version = args.version;
     var options = {};
@@ -182,6 +184,59 @@ gulp.task('inject',['wiredep','styles','templatecache'],function() {
                .pipe(gulp.dest(config.client));
 });
 
+gulp.task('test',['vet'], function(done) {
+    startTests(true, done);
+});
+
+gulp.task('build', ['optimize', 'images', 'fonts'], function() {
+    log('building everything!');
+
+    var msg = {
+        title: 'gulp build',
+        subtitle: 'Deploy to the build folder',
+        message: 'running gulp serve-build'
+    };
+    del(config.temp);
+    log(msg);
+    notify(msg);
+
+ });
+
+ function notify(options) { 
+    var notifier = require('node-notifier');
+    var notifyOptions = {
+        sound: 'Bottle',
+        contentImage: path.join(__dirname, 'gulp.png'),
+        icon: path.join(__dirname, 'gulp.png')
+    };
+
+    _.assign(notifyOptions, options);
+    notifier.notify(notifyOptions)
+ }
+
+function startTests(singleRun, done) {
+    var karma = require('karma').server;
+    var excludeFiles = [];
+    var serverSpecs = config.serverIntegrationSpecs;
+
+    excludeFiles = serverSpecs;
+
+    karma.start({
+        configFile: __dirname + '/karma.conf.js',
+        exclude: excludeFiles,
+        singleRun:  !!singleRun
+    }, karmaCompleted);
+
+    function karmaCompleted(karmaResult) {
+        if(karmaResult === 1){
+            done('karma: teste failed with code ' + karmaResult);
+        }
+        else{
+            done();
+        }
+    }
+}
+
 function serve(isDev) {
 
     var nodeOptions = {
@@ -214,7 +269,7 @@ function serve(isDev) {
          });
 
 }
-gulp.task('serve-build',['optimize'], function() {
+gulp.task('serve-build',['build'], function() {
     serve(false);
 });
 
