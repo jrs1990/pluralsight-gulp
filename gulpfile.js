@@ -215,7 +215,7 @@ gulp.task('build', ['optimize', 'images', 'fonts'], function() {
  }
 
 function startTests(singleRun, done) {
-    var karma = require('karma').server;
+  //  var karma = require('karma').server;
     var excludeFiles = [];
    var serverSpecs = config.serverIntegrationSpecs;
 
